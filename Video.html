@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galerie Média Plein Écran</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s;
+        }
+        
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        .media-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+            position: relative;
+        }
+        
+        .media-card:hover {
+            transform: scale(1.02);
+        }
+        
+        .media-card img, .media-card video {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .media-type {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        /* Style pour la vue agrandie */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .enlarged-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .enlarged-media {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .video-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 1001;
+        }
+        
+        .control-btn {
+            background-color: rgba(255, 255, 255, 0.7);
+            color: #333;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(255, 255, 255, 0.5);
+            color: #333;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+        
+        .prev-btn {
+            left: 10px;
+        }
+        
+        .next-btn {
+            right: 10px;
+        }
+        
+        .close-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(255, 255, 255, 0.5);
+            color: #333;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+        
+        @media (max-width: 400px) {
+            .nav-btn, .control-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+            }
+        }
+          :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #e74c3c;
+            --text-light: #ecf0f1;
+            --transition-speed: 0.3s;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), #34495e);
+            color: var(--text-light);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1000') center/cover;
+            opacity: 0.15;
+            z-index: -1;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: inline-block;
+        }
+        
+        header h1::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--secondary-color);
+            transition: width var(--transition-speed) ease;
+        }
+        
+        header h1:hover::after {
+            width: 100%;
+        }
+        
+        header h1 span {
+            font-size: 1.4rem;
+            font-weight: 300;
+            display: block;
+            margin-top: 0.3rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 0.5rem 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            transition: all var(--transition-speed) ease;
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-50%) scale(1.05);
+        }
+        
+        .back-btn i {
+            transition: transform var(--transition-speed) ease;
+        }
+        
+        .back-btn:hover i {
+            transform: translateX(-3px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 1.2rem;
+                text-align: center;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+                display: block;
+            }
+            
+            header h1 span {
+                font-size: 1.1rem;
+            }
+            
+            .back-btn {
+                position: relative;
+                right: auto;
+                top: auto;
+                transform: none;
+                margin-top: 1rem;
+                display: inline-flex;
+            }
+        }
+    </style>
+</head>
+<body>
+     <header>
+        <h1>Les vidéos <span>Nuit des Distingués 2025</span></h1>
+        <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Retour</a>
+    </header>
+    <div class="media-grid" id="mediaGrid">
+        <!-- Les médias seront ajoutés dynamiquement -->
+    </div>
+    
+    <div class="overlay" id="overlay">
+        <button class="close-btn" id="closeBtn">×</button>
+        <div class="enlarged-container">
+            <button class="nav-btn prev-btn" id="prevBtn">‹</button>
+            <div id="mediaContainer"></div>
+            <button class="nav-btn next-btn" id="nextBtn">›</button>
+        </div>
+    </div>
+    
+    <script>
+       
+        const mediaItems = [
+           
+        ];
+        
+        // Éléments DOM
+        const mediaGrid = document.getElementById('mediaGrid');
+        const overlay = document.getElementById('overlay');
+        const mediaContainer = document.getElementById('mediaContainer');
+        const closeBtn = document.getElementById('closeBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        // Variables d'état
+        let currentMediaIndex = 0;
+        let currentMediaElement = null;
+        let videoControls = null;
+        
+        // Créer la grille de médias
+        function createMediaGrid() {
+            mediaGrid.innerHTML = '';
+            mediaItems.forEach((media, index) => {
+                const mediaCard = document.createElement('div');
+                mediaCard.className = 'media-card';
+                
+                if (media.type === 'image') {
+                    mediaCard.innerHTML = `
+                        <img src="${media.url}" alt="Media ${media.id}" data-index="${index}">
+                        <span class="media-type">Image</span>
+                    `;
+                } else {
+                    mediaCard.innerHTML = `
+                        <video muted playsinline>
+                            <source src="${media.url}" type="video/mp4">
+                        </video>
+                        <span class="media-type">Vidéo</span>
+                    `;
+                    const video = mediaCard.querySelector('video');
+                    video.setAttribute('data-index', index);
+                    video.setAttribute('poster', 'https://picsum.photos/id/20/150/150'); // Miniature pour la vidéo
+                }
+                
+                mediaGrid.appendChild(mediaCard);
+            });
+            
+            // Ajouter les écouteurs d'événements
+            document.querySelectorAll('.media-card img, .media-card video').forEach(media => {
+                media.addEventListener('click', (e) => {
+                    currentMediaIndex = parseInt(e.target.getAttribute('data-index'));
+                    showEnlargedMedia(currentMediaIndex);
+                });
+            });
+        }
+        
+        // Afficher le média agrandi
+        function showEnlargedMedia(index) {
+            mediaContainer.innerHTML = '';
+            const media = mediaItems[index];
+            
+            if (media.type === 'image') {
+                currentMediaElement = document.createElement('img');
+                currentMediaElement.className = 'enlarged-media';
+                currentMediaElement.src = media.url;
+            } else {
+                currentMediaElement = document.createElement('video');
+                currentMediaElement.className = 'enlarged-media';
+                currentMediaElement.controls = true;
+                currentMediaElement.autoplay = true;
+                currentMediaElement.innerHTML = `<source src="${media.url}" type="video/mp4">`;
+                
+                // Créer les contrôles vidéo personnalisés
+                createVideoControls();
+            }
+            
+            mediaContainer.appendChild(currentMediaElement);
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Empêcher le zoom sur iOS
+            document.documentElement.style.touchAction = 'none';
+            document.documentElement.style.overscrollBehavior = 'none';
+        }
+        
+        // Créer des contrôles vidéo personnalisés
+        function createVideoControls() {
+            if (videoControls) videoControls.remove();
+            
+            videoControls = document.createElement('div');
+            videoControls.className = 'video-controls';
+            
+            const playPauseBtn = document.createElement('button');
+            playPauseBtn.className = 'control-btn';
+            playPauseBtn.innerHTML = '⏯';
+            playPauseBtn.addEventListener('click', togglePlayPause);
+            
+            const muteBtn = document.createElement('button');
+            muteBtn.className = 'control-btn';
+            muteBtn.innerHTML = '🔊';
+            muteBtn.addEventListener('click', toggleMute);
+            
+            videoControls.appendChild(playPauseBtn);
+            videoControls.appendChild(muteBtn);
+            mediaContainer.appendChild(videoControls);
+        }
+        
+        function togglePlayPause() {
+            if (currentMediaElement.paused) {
+                currentMediaElement.play();
+            } else {
+                currentMediaElement.pause();
+            }
+        }
+        
+        function toggleMute() {
+            currentMediaElement.muted = !currentMediaElement.muted;
+        }
+        
+        // Fermer la vue agrandie
+        function closeOverlay() {
+            if (currentMediaElement && currentMediaElement.tagName === 'VIDEO') {
+                currentMediaElement.pause();
+            }
+            
+            overlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            
+            // Rétablir le comportement normal
+            document.documentElement.style.touchAction = '';
+            document.documentElement.style.overscrollBehavior = '';
+        }
+        
+        // Navigation entre les médias
+        function navigate(direction) {
+            if (direction === 'prev') {
+                currentMediaIndex = (currentMediaIndex - 1 + mediaItems.length) % mediaItems.length;
+            } else {
+                currentMediaIndex = (currentMediaIndex + 1) % mediaItems.length;
+            }
+            showEnlargedMedia(currentMediaIndex);
+        }
+        
+        // Écouteurs d'événements
+        closeBtn.addEventListener('click', closeOverlay);
+        prevBtn.addEventListener('click', () => navigate('prev'));
+        nextBtn.addEventListener('click', () => navigate('next'));
+        
+        // Fermer avec la touche Échap
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeOverlay();
+            } else if (e.key === 'ArrowLeft' && overlay.classList.contains('active')) {
+                navigate('prev');
+            } else if (e.key === 'ArrowRight' && overlay.classList.contains('active')) {
+                navigate('next');
+            }
+        });
+        
+        // Fermer en cliquant sur le fond
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeOverlay();
+            }
+        });
+        
+        // Gestion du swipe sur mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        mediaContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+        
+        mediaContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, {passive: true});
+        
+        function handleSwipe() {
+            // Ne pas déclencher le swipe si on interagit avec les contrôles vidéo
+            if (videoControls && videoControls.contains(document.elementFromPoint(touchEndX, touchEndY))) {
+                return;
+            }
+            
+            const diff = touchStartX - touchEndX;
+            const swipeThreshold = 50; // Sensibilité du swipe
+            
+            if (diff > swipeThreshold) {
+                navigate('next');
+            } else if (diff < -swipeThreshold) {
+                navigate('prev');
+            }
+        }
+        
+        // Empêcher le défilement de la page lorsque l'overlay est actif
+        document.addEventListener('touchmove', (e) => {
+            if (overlay.classList.contains('active')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Initialiser la galerie
+        createMediaGrid();
+    </script>
+</body>
+</html>

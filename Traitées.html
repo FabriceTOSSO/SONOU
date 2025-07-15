@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Galerie Photo</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #e74c3c;
+            --text-light: #ecf0f1;
+            --transition-speed: 0.3s;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), #34495e);
+            color: var(--text-light);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1000') center/cover;
+            opacity: 0.15;
+            z-index: -1;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: inline-block;
+        }
+        
+        header h1::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--secondary-color);
+            transition: width var(--transition-speed) ease;
+        }
+        
+        header h1:hover::after {
+            width: 100%;
+        }
+        
+        header h1 span {
+            font-size: 1.4rem;
+            font-weight: 300;
+            display: block;
+            margin-top: 0.3rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 0.5rem 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            transition: all var(--transition-speed) ease;
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-50%) scale(1.05);
+        }
+        
+        .back-btn i {
+            transition: transform var(--transition-speed) ease;
+        }
+        
+        .back-btn:hover i {
+            transform: translateX(-3px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 1.2rem;
+                text-align: center;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+                display: block;
+            }
+            
+            header h1 span {
+                font-size: 1.1rem;
+            }
+            
+            .back-btn {
+                position: relative;
+                right: auto;
+                top: auto;
+                transform: none;
+                margin-top: 1rem;
+                display: inline-flex;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s;
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        .photo-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .photo-card:hover {
+            transform: scale(1.02);
+        }
+        
+        .photo-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        /* Style pour la vue agrandie */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .enlarged-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .enlarged-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .nav-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(255, 255, 255, 0.5);
+            color: #333;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+        
+        .prev-btn {
+            left: 10px;
+        }
+        
+        .next-btn {
+            right: 10px;
+        }
+        
+        .close-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(255, 255, 255, 0.5);
+            color: #333;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+        
+        /* Cache les boutons de navigation sur très petits écrans */
+        @media (max-width: 400px) {
+            .nav-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Photos Traitées <span>Nuit des Distingués 2025</span></h1>
+        <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Retour</a>
+    </header>
+    <div class="photo-grid" id="photoGrid">
+        <!-- Les images seront ajoutées dynamiquement -->
+    </div>
+    
+    <div class="overlay" id="overlay">
+        <button class="close-btn" id="closeBtn">×</button>
+        <div class="enlarged-container">
+            <button class="nav-btn prev-btn" id="prevBtn">‹</button>
+            <img class="enlarged-img" id="enlargedImg" src="" alt="">
+            <button class="nav-btn next-btn" id="nextBtn">›</button>
+        </div>
+    </div>
+    
+    <script>
+        // Données des images (remplacez par vos propres images)
+        const photos = [
+             { id: 1, url: './Image/IMG_0002.jpg' },
+  { id: 2, url: './Image/IMG_0131.jpg' },
+  { id: 3, url: './Image/IMG_0038.jpg' },
+  { id: 4, url: './Image/IMG_0039.jpg' },
+  { id: 5, url: './Image/IMG_0040.jpg' },
+  { id: 6, url: './Image/IMG_0042.jpg' },
+  { id: 7, url: './Image/IMG_0057.jpg' },
+  { id: 8, url: './Image/IMG_0067.jpg' },
+  { id: 9, url: './Image/IMG_0107.jpg' },
+  { id: 10, url: './Image/IMG_0111.jpg' },
+ { id: 11, url: './Image/IMG_0131.jpg' },
+  { id: 12, url: './Image/IMG_0034.jpg' },
+  { id: 13, url: './Image/IMG_0151.jpg' },
+  { id: 14, url: './Image/IMG_0212.jpg' },
+  { id: 15, url: './Image/IMG_0239.jpg' },
+  { id: 16, url: './Image/IMG_0306.jpg' },
+  { id: 17, url: './Image/IMG_0307.jpg' },
+  { id: 18, url: './Image/IMG_0308.jpg' },
+  { id: 19, url: './Image/IMG_0349.jpg' },
+  { id: 20, url: './Image/IMG_0353.jpg' },
+  { id: 21, url: './Image/IMG_0363.jpg' },
+  { id: 22, url: './Image/IMG_0451.jpg' },
+  { id: 23, url: './Image/IMG_0489.jpg' },
+  { id: 24, url: './Image/IMG_0498.jpg' },
+  { id: 25, url: './Image/IMG_0528.jpg' },
+  { id: 26, url: './Image/IMG_0535.jpg' },
+  { id: 27, url: './Image/IMG_0540.jpg' },
+  { id: 28, url: './Image/IMG_0541.jpg' },
+  { id: 29, url: './Image/IMG_0545.jpg' },
+  { id: 30, url: './Image/IMG_0553.jpg' },
+ { id: 31, url: './Image/IMG_0554.jpg' },
+  { id: 32, url: './Image/IMG_0562.jpg' },
+  { id: 33, url: './Image/IMG_0590.jpg' },
+  { id: 34, url: './Image/IMG_0606.jpg' },
+  { id: 35, url: './Image/IMG_0607.jpg' },
+  { id: 36, url: './Image/IMG_0609.jpg' },
+  { id: 37, url: './Image/IMG_0623.jpg' },
+  { id: 38, url: './Image/IMG_0658.jpg' },
+  { id: 39, url: './Image/IMG_0661.jpg' },
+  { id: 40, url: './Image/IMG_0674.jpg' },
+  { id: 41, url: './Image/IMG_0690.jpg' },
+  { id: 42, url: './Image/IMG_0707.jpg' },
+  { id: 43, url: './Image/IMG_0718.jpg' },
+  { id: 44, url: './Image/IMG_0722.jpg' },
+  { id: 45, url: './Image/IMG_0732.jpg' },
+  { id: 46, url: './Image/IMG_0741.jpg' },
+  { id: 47, url: './Image/IMG_0752.jpg' },
+  { id: 48, url: './Image/IMG_0755.jpg' },
+  { id: 49, url: './Image/IMG_0756.jpg' },
+  { id: 50, url: './Image/IMG_9332.jpg' },
+  { id: 51, url: './Image/IMG_9338.jpg' },
+  { id: 52, url: './Image/IMG_9349.jpg' },
+  { id: 53, url: './Image/IMG_9383.jpg' },
+  { id: 54, url: './Image/IMG_9385.jpg' },
+  { id: 55, url: './Image/IMG_9387.jpg' },
+  { id: 56, url: './Image/IMG_9389.jpg' },
+  { id: 57, url: './Image/IMG_9392.jpg' },
+  { id: 58, url: './Image/IMG_9394.jpg' },
+  { id: 59, url: './Image/IMG_9428.jpg' },
+  { id: 60, url: './Image/IMG_9430.jpg' },
+  { id: 61, url: './Image/IMG_9432.jpg' },
+  { id: 62, url: './Image/IMG_9447.jpg' },
+  { id: 63, url: './Image/IMG_9458.jpg' },
+  { id: 64, url: './Image/IMG_9464.jpg' },
+  { id: 65, url: './Image/IMG_9471.jpg' },
+  { id: 66, url: './Image/IMG_9489.jpg' },
+  { id: 67, url: './Image/IMG_9492.jpg' },
+  { id: 68, url: './Image/IMG_9499.jpg' },
+  { id: 69, url: './Image/IMG_9515.jpg' },
+  { id: 70, url: './Image/IMG_9515_1.jpg' },
+  { id: 71, url: './Image/IMG_9519.jpg' },
+  { id: 72, url: './Image/IMG_9520.jpg' },
+  { id: 73, url: './Image/IMG_9532.jpg' },
+  { id: 74, url: './Image/IMG_9542.jpg' },
+  { id: 75, url: './Image/IMG_9545.jpg' },
+  { id: 76, url: './Image/IMG_9554.jpg' },
+  { id: 77, url: './Image/IMG_9560.jpg' },
+  { id: 78, url: './Image/IMG_9562.jpg' },
+  { id: 79, url: './Image/IMG_9625.jpg' },
+  { id: 80, url: './Image/IMG_9640.jpg' },
+  { id: 81, url: './Image/IMG_9682.jpg' },
+  { id: 82, url: './Image/IMG_9692.jpg' },
+  { id: 83, url: './Image/IMG_9694.jpg' },
+  { id: 84, url: './Image/IMG_9697.jpg' },
+  { id: 85, url: './Image/IMG_9702.jpg' },
+  { id: 86, url: './Image/IMG_9707.jpg' },
+  { id: 87, url: './Image/IMG_9714.jpg' },
+  { id: 88, url: './Image/IMG_9716.jpg' },
+  { id: 89, url: './Image/IMG_9721.jpg' },
+  { id: 90, url: './Image/IMG_9737.jpg' },
+  { id: 91, url: './Image/IMG_9740.jpg' },
+  { id: 92, url: './Image/IMG_9744.jpg' },
+  { id: 93, url: './Image/IMG_9747.jpg' },
+  { id: 94, url: './Image/IMG_9761.jpg' },
+  { id: 95, url: './Image/IMG_9766.jpg' },
+  { id: 96, url: './Image/IMG_9770.jpg' },
+  { id: 97, url: './Image/IMG_9779.jpg' },
+  { id: 98, url: './Image/IMG_9789.jpg' },
+  { id: 99, url: './Image/IMG_9806.jpg' },
+  { id: 100, url: './Image/IMG_9825.jpg' },
+  { id: 101, url: './Image/IMG_9835.jpg' },
+  { id: 102, url: './Image/IMG_9838.jpg' },
+  { id: 103, url: './Image/IMG_9842.jpg' },
+  { id: 104, url: './Image/IMG_9860.jpg' },
+  { id: 105, url: './Image/IMG_9863.jpg' },
+  { id: 106, url: './Image/IMG_9867.jpg' },
+  { id: 107, url: './Image/IMG_9891.jpg' },
+  { id: 108, url: './Image/IMG_9895.jpg' },
+  { id: 109, url: './Image/IMG_9911.jpg' },
+  { id: 110, url: './Image/IMG_9912.jpg' },
+  { id: 111, url: './Image/IMG_9921.jpg' },
+  { id: 112, url: './Image/IMG_9950.jpg' },
+  { id: 113, url: './Image/IMG_9953.jpg' },
+  { id: 114, url: './Image/IMG_9966.jpg' },
+  { id: 115, url: './Image/IMG_9998.jpg' },
+        ];
+        
+        // Éléments DOM
+        const photoGrid = document.getElementById('photoGrid');
+        const overlay = document.getElementById('overlay');
+        const enlargedImg = document.getElementById('enlargedImg');
+        const closeBtn = document.getElementById('closeBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        // Variables d'état
+        let currentPhotoIndex = 0;
+        
+        // Créer la grille de photos
+        function createPhotoGrid() {
+            photoGrid.innerHTML = '';
+            photos.forEach((photo, index) => {
+                const photoCard = document.createElement('div');
+                photoCard.className = 'photo-card';
+                photoCard.innerHTML = `<img src="${photo.url}" alt="Photo ${photo.id}" data-index="${index}">`;
+                photoGrid.appendChild(photoCard);
+            });
+            
+            // Ajouter les écouteurs d'événements
+            document.querySelectorAll('.photo-card img').forEach(img => {
+                img.addEventListener('click', (e) => {
+                    currentPhotoIndex = parseInt(e.target.getAttribute('data-index'));
+                    showEnlargedPhoto(currentPhotoIndex);
+                });
+            });
+        }
+        
+        // Afficher la photo agrandie
+        function showEnlargedPhoto(index) {
+            enlargedImg.src = photos[index].url;
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Empêcher le zoom sur iOS
+            document.documentElement.style.touchAction = 'none';
+            document.documentElement.style.overscrollBehavior = 'none';
+        }
+        
+        // Fermer la vue agrandie
+        function closeOverlay() {
+            overlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            
+            // Rétablir le comportement normal
+            document.documentElement.style.touchAction = '';
+            document.documentElement.style.overscrollBehavior = '';
+        }
+        
+        // Navigation entre les photos
+        function navigate(direction) {
+            if (direction === 'prev') {
+                currentPhotoIndex = (currentPhotoIndex - 1 + photos.length) % photos.length;
+            } else {
+                currentPhotoIndex = (currentPhotoIndex + 1) % photos.length;
+            }
+            enlargedImg.src = photos[currentPhotoIndex].url;
+        }
+        
+        // Écouteurs d'événements
+        closeBtn.addEventListener('click', closeOverlay);
+        prevBtn.addEventListener('click', () => navigate('prev'));
+        nextBtn.addEventListener('click', () => navigate('next'));
+        
+        // Fermer avec la touche Échap
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeOverlay();
+            } else if (e.key === 'ArrowLeft' && overlay.classList.contains('active')) {
+                navigate('prev');
+            } else if (e.key === 'ArrowRight' && overlay.classList.contains('active')) {
+                navigate('next');
+            }
+        });
+        
+        // Fermer en cliquant sur le fond
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeOverlay();
+            }
+        });
+        
+        // Gestion du swipe sur mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        enlargedImg.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+        
+        enlargedImg.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, {passive: true});
+        
+        function handleSwipe() {
+            const diff = touchStartX - touchEndX;
+            const swipeThreshold = 50; // Sensibilité du swipe
+            
+            if (diff > swipeThreshold) {
+                navigate('next');
+            } else if (diff < -swipeThreshold) {
+                navigate('prev');
+            }
+        }
+        
+        // Empêcher le défilement de la page lorsque l'overlay est actif
+        document.addEventListener('touchmove', (e) => {
+            if (overlay.classList.contains('active')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Initialiser la galerie
+        createPhotoGrid();
+    </script>
+</body>
+</html>
